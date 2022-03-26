@@ -304,11 +304,8 @@ public final class WooMinecraft extends JavaPlugin {
 
 		// Walk over each line of the response.
 		String line;
-		try {
-			while ((line = in.readLine()) != null) {
-				buffer.append(line);
-			}
-		} catch (NullPointerException ignored) {
+		while ( ( line = in.readLine() ) != null ) {
+			buffer.append( line );
 		}
 
 		in.close();
