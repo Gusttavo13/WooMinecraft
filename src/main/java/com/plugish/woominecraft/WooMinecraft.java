@@ -308,7 +308,8 @@ public final class WooMinecraft extends JavaPlugin {
 			while ((line = in.readLine()) != null) {
 				buffer.append(line);
 			}
-		} catch (NullPointerException ignored) {
+		} catch (NullPointerException e) {
+			return buffer.toString();
 		}
 
 		in.close();
