@@ -2,7 +2,7 @@
 
 [WooMinecraft](http://woominecraft.com) is a free Minecraft Donation plugin for your server that provides a self-hosted solution where you're the boss.  By leveraging a well known eCommerce plugin on the
 WordPress side of things, we allow you to specify commands for product variations, general product commands, and resending of donations at any time.   
-![WooMinecraft Logo](https://raw.githubusercontent.com/WooMinecraft/WooMinecraft/master/src/main/resources/wmc-logo.jpg)
+![WooMinecraft Logo](https://raw.githubusercontent.com/WooMinecraft/WooMinecraft/main/src/main/resources/wmc-logo.jpg)
 
 ## Config
 Your config should look like the below section.
@@ -72,6 +72,10 @@ Since this plugin is GPL and entirely opensource, we cannot be sure how you will
 You'll need the WordPress plugin for this MC Plugin to work - you can [get it here](https://github.com/WooMinecraft/woominecraft-wp).
 
 ## Changelog
+
+## 1.4.4
+* Fix logic for getting pending orders.
+* Additional logging for pending orders.
 
 ## 1.4.3
 * Fix RestApi issues
