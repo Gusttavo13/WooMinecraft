@@ -211,7 +211,7 @@ public final class WooMinecraft extends JavaPlugin {
 			for ( String command : order.getCommands() ) {
 				//Auth player against Mojang api
 				if ( ! isPaidUser( player ) ) {
-					debug_log( "User is not a paid player " + player.getDisplayName() );
+					debug_log( "User is not a paid player " + player.getName() );
 					return false;
 				}
 
@@ -375,75 +375,64 @@ public final class WooMinecraft extends JavaPlugin {
 	 * @return If the user is a paid player.
 	 */
 	private boolean isPaidUser(Player player) {
-		String playerName = player.getName();
-		String playerUUID = player.getUniqueId().toString().replace( "-", "" );
+		String playerName = Bukkit.getPlayer(player.getName()).getName() ;
+		String playerUUID = player.getUniqueId().toString().replace("-", "");
 		String playerKeyBase = playerName + ':' + playerUUID + ':';
 		String validPlayerKey = playerKeyBase + true;
 		String invalidPlayerKey = playerKeyBase + false;
 
 		// Check if server is in online mode.
 		if (Bukkit.getServer().getOnlineMode()) {
-			wmc_log( "Server is in online mode.", 3 );
+			wmc_log("Server is in online mode.", 3);
 			return true;
-		}
+		} else if (Bukkit.spigot().getConfig().getBoolean("settings.bungeecord")) {
+			// Check the base pattern, if it exists, return if the player is valid or not.
+			if (PlayersMap.contains(playerKeyBase)) {
+				boolean valid = PlayersMap.contains(validPlayerKey);
+				if (!valid) {
+					player.sendMessage("Mojang Auth: Please speak with an admin about your purchase");
+					wmc_log("Offline mode not supported", 3);
+				}
+				return valid;  // Return valid instead of false
+			} else if ( ! PlayersMap.contains(playerKeyBase)) {
+				try {
+					URL mojangUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + playerName);
+					InputStream inputStream = mojangUrl.openStream();
+					Scanner scanner = new Scanner(inputStream);
+					String apiResponse = "";
+					while (scanner.hasNextLine()) {
+						String line = scanner.nextLine();
+						apiResponse = apiResponse + line;
 
-		if ( ! Bukkit.spigot().getConfig().getBoolean("settings.bungeecord") ) {
-			wmc_log( "Server in offline Mode", 3 );
-			return false;
-		}
+					}
+					apiResponse.trim();
+					scanner.close();
+					if (!apiResponse.contains(playerName)) {
+						PlayersMap.add(invalidPlayerKey);
+						debug_log(apiResponse, 3);
+						throw new IOException("Mojang Auth: PlayerName '"+ playerName +"' doesn't exist");
+					}
 
-		// Check the base pattern, if it exists, return if the player is valid or not.
-		// Doing so should save on many if/else statements
-		if ( PlayersMap.toString().contains( playerKeyBase ) ) {
-			boolean valid = PlayersMap.contains( validPlayerKey );
-			if ( ! valid ) {
-				player.sendMessage( "Mojang Auth: Please Speak with a admin about your purchase" );
-				wmc_log("Offline mode not supported", 3);
+					if (!apiResponse.contains(playerUUID)) {
+						PlayersMap.add(invalidPlayerKey);
+						throw new IOException("Mojang Auth: PlayerName doesn't match uuid for account");
+					}
+
+					PlayersMap.add(validPlayerKey);
+					return true;
+				} catch (MalformedURLException urlException) {
+					debug_log("Malformed URL: " + urlException.getMessage(), 3);
+					player.sendMessage("Mojang API Error: Please try again later or contact an admin about your purchase.");
+					return false;
+				} catch (IOException e) {
+					debug_log("Message when getting URL data " + e.getMessage(), 3);
+					player.sendMessage("Mojang Auth: Please speak with an admin about your purchase");
+					return false;
+				}
 			}
-
-			return valid;
+		} else {
+			wmc_log("Server in offline mode", 3);
 		}
-
-		debug_log( "Player was not in the key set " + NL + PlayersMap.toString() );
-
-		try {
-			URL mojangUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" +  playerName);
-			InputStream inputStream = mojangUrl.openStream();
-			Scanner scanner = new Scanner(inputStream);
-			String apiResponse = scanner.next();
-
-			debug_log(
-				"Logging stream data:" + NL +
-				inputStream.toString() + NL +
-				apiResponse + NL +
-				playerName + NL +
-				playerUUID
-			);
-
-			if ( ! apiResponse.contains( playerName ) ) {
-				PlayersMap.add( invalidPlayerKey );
-				throw new IOException("Mojang Auth: PlayerName doesn't exist");
-			}
-
-			if ( ! apiResponse.contains( playerUUID ) ) {
-				//if Username exists but is using the offline uuid(doesn't match mojang records) throw IOException and add player to the list as cracked
-				PlayersMap.add( invalidPlayerKey );
-				throw new IOException("Mojang Auth: PlayerName doesn't match uuid for account");
-			}
-
-			PlayersMap.add( validPlayerKey );
-			debug_log( PlayersMap.toString() );
-			return true;
-		} catch ( MalformedURLException urlException ) {
-			debug_log("Malformed URL: " + urlException.getMessage(), 3 );
-			player.sendMessage( "Mojang API Error: Please try again later or contact an admin about your purchase." );
-		} catch ( IOException e ) {
-			debug_log( "Map is " + PlayersMap.toString() );
-			debug_log( "Message when getting URL data " + e.getMessage(), 3 );
-			player.sendMessage("Mojang Auth: Please Speak with a admin about your purchase");
-		}
-
-		// Default to false, worst case they have to run this twice.
 		return false;
 	}
 }
