@@ -51,10 +51,8 @@ public final class WooMinecraft extends JavaPlugin {
 			!Bukkit.getOnlineMode() &&
 			!Bukkit.spigot().getConfig().getBoolean("settings.bungeecord")
 		) {
-			getLogger().severe(String.valueOf(Bukkit.spigot().getConfig().getBoolean("settings.bungeecord")));
-			getLogger().severe("WooMinecraft doesn't support offLine mode");
-			Bukkit.getPluginManager().disablePlugin(this);
-			return;
+			getLogger().info(String.valueOf(Bukkit.spigot().getConfig().getBoolean("settings.bungeecord")));
+			getLogger().info("WooMinecraft rodando em Offline Mode");
 		}
 
 		YamlConfiguration config = (YamlConfiguration) getConfig();
@@ -209,12 +207,6 @@ public final class WooMinecraft extends JavaPlugin {
 
 			// Walk over all commands and run them at the next available tick.
 			for ( String command : order.getCommands() ) {
-				//Auth player against Mojang api
-				if ( ! isPaidUser( player ) ) {
-					debug_log( "User is not a paid player " + player.getName() );
-					return false;
-				}
-
 				BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 				scheduler.scheduleSyncDelayedTask(instance, () -> Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command), 20L);
 			}
